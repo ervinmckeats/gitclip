@@ -1,0 +1,19 @@
+# gitclip
+
+> gitclip is an open-source Agent Skill and Claude Code plugin that makes AI coding agents follow strict git rules: commits authored only by the human user with no AI Co-Authored-By trailers, branch names `type/short-description` and commit messages `type: text` with types feat, fix, add, del, docs, short English messages, pull requests for all changes to main, no GitHub Actions runs unless asked, no AI agent files (CLAUDE.md, AGENTS.md, .claude/) committed, and every artifact mirrored to the repository. Rules are enforced by Claude Code hooks, optional git hooks, and GitHub rulesets.
+
+Install in Claude Code: `/plugin marketplace add ervinmckeats/gitclip` then `/plugin install gitclip@gitclip`.
+Install for other agents: `npx skills add ervinmckeats/gitclip --skill gitclip`.
+Remove Claude Code's Co-Authored-By trailer: `! curl -fsSL https://raw.githubusercontent.com/ervinmckeats/gitclip/main/scripts/setup.sh | sh`.
+
+## Docs
+
+- [README](https://github.com/ervinmckeats/gitclip/blob/main/README.md): overview, install, rules, FAQ
+- [SKILL.md](https://github.com/ervinmckeats/gitclip/blob/main/skills/gitclip/SKILL.md): full rule text loaded by agents
+- [Examples](https://github.com/ervinmckeats/gitclip/blob/main/skills/gitclip/references/examples.md): good and bad branch names and commit messages
+- [Enforcement](https://github.com/ervinmckeats/gitclip/blob/main/skills/gitclip/references/enforcement.md): hooks, attribution setting, git hooks, GitHub rulesets
+
+## Optional
+
+- [Guard hook source](https://github.com/ervinmckeats/gitclip/blob/main/scripts/gitclip_guard.py)
+- [GitHub ruleset templates](https://github.com/ervinmckeats/gitclip/tree/main/templates/github-rulesets)
