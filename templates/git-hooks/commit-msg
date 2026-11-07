@@ -1,0 +1,39 @@
+#!/bin/sh
+# gitclip commit-msg hook: rejects messages that break the gitclip rules.
+# Works for any tool (any AI agent, IDE, or a human), not only Claude Code.
+msg_file="$1"
+subject=$(grep -v '^#' "$msg_file" | sed '/^[[:space:]]*$/d' | head -n 1)
+
+case "$subject" in
+  Merge\ *|Revert\ *|fixup!\ *|squash!\ *) exit 0 ;;
+esac
+
+if ! printf '%s' "$subject" | grep -Eq '^(feat|fix|add|del|docs): [^ ]'; then
+  echo "gitclip: commit message must be 'type: text' with type feat|fix|add|del|docs" >&2
+  echo "  got: $subject" >&2
+  echo "  e.g. feat: add user profile page" >&2
+  exit 1
+fi
+
+rest=${subject#*: }
+if [ "${#rest}" -gt 50 ]; then
+  echo "gitclip: subject is ${#rest} chars after the prefix (max 50)" >&2
+  exit 1
+fi
+
+case "$subject" in
+  *.) echo "gitclip: subject must not end with a period" >&2; exit 1 ;;
+esac
+
+if grep -Eiq '^[[:space:]]*co-authored-by:.*(claude|anthropic|copilot|openai|gemini|codex|cursor|noreply@)|generated (with|by) |🤖|claude\.ai/code|^[[:space:]]*claude-session:' "$msg_file"; then
+  echo "gitclip: commit message contains AI attribution; remove every Co-Authored-By / Generated with / session-link line" >&2
+  exit 1
+fi
+
+ident="$(git var GIT_AUTHOR_IDENT) $(git var GIT_COMMITTER_IDENT)"
+if printf '%s' "$ident" | grep -Eiq 'claude|anthropic|copilot|openai|gemini|codex|\[bot\]'; then
+  echo "gitclip: author/committer looks like an AI or bot: $ident" >&2
+  echo "  set your own identity: git config user.name / git config user.email" >&2
+  exit 1
+fi
+exit 0

@@ -1,0 +1,29 @@
+#!/bin/sh
+# gitclip pre-push hook: no pushes to the default branch, branch naming, clean authorship.
+zero=0000000000000000000000000000000000000000
+while read -r local_ref local_sha remote_ref remote_sha; do
+  branch=${remote_ref#refs/heads/}
+  case "$remote_ref" in refs/tags/*) continue ;; esac
+  case "$branch" in
+    main|master)
+      echo "gitclip: do not push to '$branch'; push a branch and open a pull request" >&2
+      exit 1 ;;
+  esac
+  [ "$local_sha" = "$zero" ] && continue
+  if ! printf '%s' "$branch" | grep -Eq '^(feat|fix|add|del|docs)/[a-z0-9]+(-[a-z0-9]+)*$'; then
+    echo "gitclip: branch '$branch' must be type/short-description (feat|fix|add|del|docs)" >&2
+    exit 1
+  fi
+  if [ "$remote_sha" = "$zero" ]; then range="$local_sha --not --remotes"; else range="$remote_sha..$local_sha"; fi
+  # shellcheck disable=SC2086
+  if git log --format='%an <%ae> %cn <%ce>' $range | grep -Eiq 'claude|anthropic|copilot|openai|gemini|codex|\[bot\]'; then
+    echo "gitclip: commits authored or committed by an AI or bot identity" >&2
+    exit 1
+  fi
+  # shellcheck disable=SC2086
+  if git log --format='%B' $range | grep -Eiq '^[[:space:]]*co-authored-by:.*(claude|anthropic|copilot|openai|gemini|noreply@)|generated (with|by) |🤖|claude\.ai/code'; then
+    echo "gitclip: commits contain AI attribution trailers; amend them before pushing" >&2
+    exit 1
+  fi
+done
+exit 0

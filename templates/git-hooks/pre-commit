@@ -1,0 +1,18 @@
+#!/bin/sh
+# gitclip pre-commit hook: no commits on the default branch, no AI agent files.
+branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
+case "$branch" in
+  main|master)
+    echo "gitclip: do not commit on '$branch'; create a branch: git switch -c feat/<short-description>" >&2
+    exit 1 ;;
+esac
+
+[ "$(git config --get gitclip.allowAiFiles)" = "true" ] && exit 0
+
+bad=$(git diff --cached --name-only | grep -E '(^|/)(CLAUDE(\.local)?\.md|AGENTS\.md|GEMINI\.md|COPILOT\.md|\.cursorrules|\.windsurfrules|\.clinerules|\.aider[^/]*|copilot-instructions\.md)$|(^|/)\.(claude|agents|cursor|continue|codex|gemini)/')
+if [ -n "$bad" ]; then
+  echo "gitclip: AI agent files are staged; unstage them with git restore --staged:" >&2
+  echo "$bad" | sed 's/^/  /' >&2
+  exit 1
+fi
+exit 0
