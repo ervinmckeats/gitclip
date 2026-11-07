@@ -1,0 +1,29 @@
+{
+  "name": "gitclip: no AI attribution",
+  "target": "branch",
+  "enforcement": "active",
+  "conditions": {
+    "ref_name": { "include": ["~ALL"], "exclude": [] }
+  },
+  "rules": [
+    {
+      "type": "commit_message_pattern",
+      "parameters": {
+        "name": "no AI co-author trailers or footers",
+        "operator": "regex",
+        "pattern": "(?is)(co-authored-by:[^\\n]*(claude|anthropic|copilot|openai|gemini|codex|cursor)|generated (with|by) (claude|copilot|chatgpt|gemini|codex|cursor)|claude\\.ai/code)",
+        "negate": true
+      }
+    },
+    {
+      "type": "commit_author_email_pattern",
+      "parameters": {
+        "name": "no AI author emails",
+        "operator": "regex",
+        "pattern": "(?i)(anthropic|openai|copilot|claude)",
+        "negate": true
+      }
+    }
+  ],
+  "bypass_actors": []
+}

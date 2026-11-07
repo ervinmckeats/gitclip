@@ -1,0 +1,20 @@
+{
+  "name": "gitclip: commit messages",
+  "target": "branch",
+  "enforcement": "active",
+  "conditions": {
+    "ref_name": { "include": ["~ALL"], "exclude": [] }
+  },
+  "rules": [
+    {
+      "type": "commit_message_pattern",
+      "parameters": {
+        "name": "type: text, max 50 chars after the prefix",
+        "operator": "regex",
+        "pattern": "\\A(feat|fix|add|del|docs): [^\\n]{1,50}(\\n|\\z)",
+        "negate": false
+      }
+    }
+  ],
+  "bypass_actors": []
+}

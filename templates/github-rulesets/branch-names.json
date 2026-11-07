@@ -1,0 +1,20 @@
+{
+  "name": "gitclip: branch names",
+  "target": "branch",
+  "enforcement": "active",
+  "conditions": {
+    "ref_name": { "include": ["~ALL"], "exclude": ["~DEFAULT_BRANCH"] }
+  },
+  "rules": [
+    {
+      "type": "branch_name_pattern",
+      "parameters": {
+        "name": "type/short-description",
+        "operator": "regex",
+        "pattern": "^(feat|fix|add|del|docs)/[a-z0-9]+(-[a-z0-9]+)*$",
+        "negate": false
+      }
+    }
+  ],
+  "bypass_actors": []
+}
