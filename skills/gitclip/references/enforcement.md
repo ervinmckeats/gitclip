@@ -28,7 +28,7 @@ User-only overrides (the guard refuses commands where the agent tries to set the
 ## 2. Attribution setting
 
 ```bash
-! curl -fsSL https://raw.githubusercontent.com/ervinmckeats/gitclip/main/scripts/setup.sh | sh
+curl -fsSL https://raw.githubusercontent.com/ervinmckeats/gitclip/main/scripts/setup.sh | sh   # in Terminal on your own computer, not in a cloud session
 ```
 
 or add this to `~/.claude/settings.json` by hand:

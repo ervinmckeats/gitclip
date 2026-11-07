@@ -19,17 +19,17 @@ These rules are **mandatory**. They apply to every git operation an AI agent per
 
 ## One-time setup (the user runs it, not the agent)
 
-The AI tool may add attribution on its own (a `Co-Authored-By` trailer or a "Generated with" footer). Turn that off at the source. In Claude Code the user types this in the prompt — the `!` prefix runs it in the user's own shell:
+The AI tool may add attribution on its own (a `Co-Authored-By` trailer or a "Generated with" footer). Turn that off at the source. The user runs this **in Terminal on their own computer**. Do not suggest running it with `!` inside a cloud session: there `!` runs in a temporary container, the setting is lost when the session ends, and the script refuses to run (it checks `CLAUDE_CODE_REMOTE`). `!` works only in Claude Code running locally on the user's machine.
 
 ```bash
-! curl -fsSL https://raw.githubusercontent.com/ervinmckeats/gitclip/main/scripts/setup.sh | sh
+curl -fsSL https://raw.githubusercontent.com/ervinmckeats/gitclip/main/scripts/setup.sh | sh
 ```
 
 Add `-s -- --hooks` after `sh` to also install gitclip git hooks for every repository on the machine (they work for any tool, not only Claude Code); add `--dry-run` to preview. The script merges `"attribution": {"commit": "", "pr": ""}` into `~/.claude/settings.json` (keeping a backup) and removes the deprecated `includeCoAuthoredBy`.
 
 Agent duties:
 
-- If you see that attribution is still being added, or the user asks how to stop it, **show the user the exact `!` command above** and ask them to run it. Do not edit the user's `~/.claude/settings.json` yourself unless they ask you to.
+- If you see that attribution is still being added, or the user asks how to stop it, **show the user the exact command above** and ask them to run it in Terminal on their own computer. Do not edit the user's `~/.claude/settings.json` yourself unless they ask you to.
 - Even after setup, keep following Rule 1 yourself: omit every attribution line regardless of settings.
 - Settings files on the user's machine do not reach cloud sessions; in the cloud, these rules and the GitHub rulesets (`references/enforcement.md`) are the protection.
 
