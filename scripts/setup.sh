@@ -1,6 +1,6 @@
 #!/bin/sh
-# gitclip setup — run once on your machine. In Claude Code, prefix with ! to run it as yourself:
-#   ! curl -fsSL https://raw.githubusercontent.com/ervinmckeats/gitclip/main/scripts/setup.sh | sh
+# gitclip setup — run once in Terminal on your own computer (not in a cloud session):
+#   curl -fsSL https://raw.githubusercontent.com/ervinmckeats/gitclip/main/scripts/setup.sh | sh
 # Options (pass after "sh -s --"):
 #   --hooks     also install gitclip git hooks for every repository (git config --global core.hooksPath)
 #   --dry-run   show what would change, change nothing
@@ -14,6 +14,14 @@ for a in "$@"; do
     *) echo "unknown option: $a" >&2; exit 1 ;;
   esac
 done
+
+if [ "${CLAUDE_CODE_REMOTE:-}" = "true" ]; then
+  echo "gitclip: STOP - this is a cloud session, not your computer." >&2
+  echo "  Settings written here are lost when the session ends and never reach your machine." >&2
+  echo "  Run the same command in Terminal on your own computer (without the leading !)." >&2
+  echo "  Nothing was changed." >&2
+  exit 1
+fi
 
 command -v python3 >/dev/null 2>&1 || { echo "gitclip: python3 is required" >&2; exit 1; }
 

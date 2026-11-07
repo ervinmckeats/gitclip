@@ -17,10 +17,10 @@ gitclip is an [Agent Skill](https://agentskills.io) and a Claude Code plugin. Th
 /plugin install gitclip@gitclip
 ```
 
-Then turn off the tool's own attribution trailer (the `!` prefix runs the command in your shell):
+Then turn off the tool's own attribution trailer. Run this in **Terminal on your own computer** (not in a cloud session — there the setting is lost when the session ends, and the script refuses to run):
 
 ```bash
-! curl -fsSL https://raw.githubusercontent.com/ervinmckeats/gitclip/main/scripts/setup.sh | sh
+curl -fsSL https://raw.githubusercontent.com/ervinmckeats/gitclip/main/scripts/setup.sh | sh
 ```
 
 **Any agent that supports Agent Skills (Codex, Cursor, Gemini CLI, OpenCode, …)**

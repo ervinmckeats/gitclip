@@ -4,7 +4,7 @@
 
 Install in Claude Code: `/plugin marketplace add ervinmckeats/gitclip` then `/plugin install gitclip@gitclip`.
 Install for other agents: `npx skills add ervinmckeats/gitclip --skill gitclip`.
-Remove Claude Code's Co-Authored-By trailer: `! curl -fsSL https://raw.githubusercontent.com/ervinmckeats/gitclip/main/scripts/setup.sh | sh`.
+Remove Claude Code's Co-Authored-By trailer: `curl -fsSL https://raw.githubusercontent.com/ervinmckeats/gitclip/main/scripts/setup.sh | sh` (run in Terminal on your own computer, not in a cloud session).
 
 ## Docs
 
