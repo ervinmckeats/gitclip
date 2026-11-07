@@ -1,0 +1,12 @@
+{
+  "name": "gitclip",
+  "description": "Strict git rules for AI coding agents",
+  "owner": { "name": "Ervin McKeats", "url": "https://github.com/ervinmckeats" },
+  "plugins": [
+    {
+      "name": "gitclip",
+      "source": "./",
+      "description": "Human-only authorship, no AI trailers, feat/fix/add/del/docs naming, PR workflow, no unasked CI, no AI files in repos. Enforced by hooks."
+    }
+  ]
+}
