@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.1.0
+
+- feat: allow agents to merge docs/ PRs after a PR check
+- feat: check live PR title, description, commits and files before any merge
+
 ## 1.0.0
 
 - add: gitclip skill with 7 rules, examples, and enforcement guide

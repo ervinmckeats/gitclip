@@ -101,8 +101,17 @@ One logical change per commit. If a change mixes types, split it into separate c
 
 - **Never push directly to the default branch** (`main`/`master`), never force-push to it, never delete it.
 - **Features and key changes** (`feat`, large `add`/`del`, anything touching architecture, data models, public API, security, or user-visible behavior): branch → commits → open a PR → **do not merge it**. The user reviews and merges.
-- **Bug fixes** (`fix`): branch → PR → may be merged automatically (auto-merge allowed) once checks pass.
-- **Docs-only changes** (`docs`): treat as key changes unless the user explicitly allows auto-merge for docs.
+- **Bug fixes** (`fix`) and **documentation** (`docs`): branch → PR → **PR check** (below) → may be merged by the agent (squash, auto-merge allowed) once the check and CI pass. A `docs` PR may touch only documentation files (`*.md`, `*.txt`, `*.rst`, `docs/`, `LICENSE`); anything else makes it a key change.
+
+**PR check before any merge** — read the PR as it is on GitHub (`gh pr view <n> --json title,body,commits,files,mergeable`), not your local copy, and merge only if all of these hold:
+
+1. Title is `type: text` and its type matches the branch type.
+2. Description has no AI names, `Generated with/by` footers, session links, or emojis — **some platforms append these after you submit**, so check the live PR. If one is there and you cannot remove it, do not merge: tell the user.
+3. Every commit is authored by the user, has a `type: text` subject, and no AI trailers.
+4. Files: no AI agent files (Rule 6), no workflow files (Rule 5); for `docs`, documentation files only.
+5. No merge conflicts, not a draft, CI green (if any).
+
+If any item fails, fix it if you can (amend unpushed commits, edit the description), re-run the check, and merge only when it passes; otherwise leave the PR open and tell the user what failed.
 - **Unsure which category?** Treat it as a key change: PR, no self-merge.
 - Prefer **squash merge** with the PR title as the commit message, so the main branch history keeps the `type: text` format.
 
@@ -151,7 +160,7 @@ Everything produced while working on a project also lives in the project's repos
 git push --force / -f   (to any shared branch)     git push origin main / master
 git commit --no-verify  /  git push --no-verify    git reset --hard on pushed history
 git branch -D main      /  git push --delete main  gh workflow run / gh run rerun
-gh pr merge  (on feat/add/del/docs PRs)             git config --global …  (identity changes)
+gh pr merge  (on feat/add/del PRs, or before the PR check)   git config --global …  (identity changes)
 ```
 
 ## Final checklist (run every time; do not report done until all pass)

@@ -379,20 +379,60 @@ def check_gh(tokens, cwd, bodies):
                 block("PR body contains AI attribution", "remove the footer; the user is the only author")
     if group == "pr" and action == "merge":
         target = positional(rest[1:], takes_value=("-t", "--subject", "-b", "--body", "-F", "--body-file", "-R", "--repo", "--match-head-commit", "-A", "--author-email"))
-        head = target[0] if target else run_git(cwd, "rev-parse", "--abbrev-ref", "HEAD")
-        if head and (head.isdigit() or head.startswith("http")):
-            try:
-                out = subprocess.run(["gh", "pr", "view", head, "--json", "headRefName", "-q", ".headRefName"],
-                                     cwd=cwd, capture_output=True, text=True, timeout=20)
-                head = out.stdout.strip() or head
-            except Exception:
-                pass
-        if not head.startswith("fix/"):
-            block(f'merging PR "{head}" - agents may merge only fix/ branches (by branch name)',
-                  "leave feature and key-change PRs open for the user to review and merge")
+        repo = option_values(rest[1:], ("-R",), ("--repo",))
+        ref = target[0] if target else ""
+        check_pr_before_merge(ref, repo[0] if repo else "", cwd)
     if group == "release" and action in ("create", "edit"):
         for n in option_values(rest[1:], ("-n",), ("--notes",)):
             check_no_ai(resolve_heredoc(n, bodies), "release notes")
+
+
+MERGEABLE_PREFIXES = ("fix/", "docs/")
+DOC_FILE_RE = re.compile(r"(?i)(\.(md|mdx|markdown|txt|rst|adoc)$|(^|/)(docs?|documentation)/|(^|/)(LICENSE|NOTICE|AUTHORS)(\.[a-z]+)?$)")
+
+
+def check_pr_before_merge(ref, repo, cwd):
+    """Agents may merge only fix/ and docs/ PRs, and only after the PR passes a full check."""
+    cmd = ["gh", "pr", "view"] + ([ref] if ref else []) + (["--repo", repo] if repo else []) + [
+        "--json", "headRefName,title,body,state,isDraft,mergeable,commits,files"]
+    try:
+        out = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, timeout=30)
+        pr = json.loads(out.stdout) if out.returncode == 0 else None
+    except Exception:
+        pr = None
+    if not pr:
+        block("could not read the PR to check it before merging",
+              "merging needs a successful PR check; leave the PR for the user")
+    head = pr.get("headRefName", "")
+    if not head.startswith(MERGEABLE_PREFIXES):
+        block(f'merging PR "{head}" - agents may merge only fix/ and docs/ branches',
+              "leave feature and key-change PRs open for the user to review and merge")
+    if pr.get("isDraft") or pr.get("state") != "OPEN":
+        block("PR is a draft or not open", "leave it for the user")
+    if pr.get("mergeable") == "CONFLICTING":
+        block("PR has merge conflicts", "resolve them first")
+    check_message(pr.get("title", ""), "PR title")
+    if not pr.get("title", "").startswith(head.split("/", 1)[0] + ": "):
+        block(f'PR title type does not match branch "{head}"', "use the same type in the title and the branch name")
+    check_no_ai(pr.get("body", ""), "PR description")
+    for c in pr.get("commits", []):
+        for a in c.get("authors", []):
+            ident = f"{a.get('name', '')} <{a.get('email', '')}>"
+            if AI_IDENTITY_RE.search(ident):
+                block(f"PR commit authored by {ident}", "commits must be authored by the user")
+        head_line = c.get("messageHeadline", "")
+        if not head_line.startswith(("Merge ", "Revert ")):
+            check_message(head_line, "PR commit message")
+        check_no_ai(c.get("messageBody", ""), "PR commit message")
+    files = [f.get("path", "") for f in pr.get("files", [])]
+    check_ai_files(files, cwd, "in the PR")
+    if WORKFLOW_RE.search("\n".join(files)):
+        block("PR changes GitHub Actions workflows", "leave it for the user")
+    if head.startswith("docs/"):
+        other = [p for p in files if not DOC_FILE_RE.search(p)]
+        if other:
+            block(f"docs/ PR changes non-documentation files: {', '.join(other[:5])}",
+                  "a docs/ PR may only touch documentation; leave it for the user")
 
 
 def check_bash(cmd, cwd):
