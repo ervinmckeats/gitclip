@@ -5,7 +5,7 @@ A skill is guidance: an agent can still forget it. gitclip adds layers that **bl
 | Layer | Where it runs | What it stops | Covers cloud sessions? |
 |---|---|---|---|
 | Skill (`SKILL.md`) | the agent's context | everything, by instruction | yes, when loaded |
-| Claude Code plugin hooks | the user's machine, Claude Code | wrong names, AI trailers/identity, pushes to main, force pushes, `--no-verify`, merging non-fix PRs, Actions runs and workflow edits, AI files | no |
+| Claude Code plugin hooks | the user's machine, Claude Code | wrong names, AI trailers/identity, pushes to main, force pushes, `--no-verify`, merging PRs other than `fix/`/`docs/`, or ones whose live title, description, commits or files fail the PR check, Actions runs and workflow edits, AI files | no |
 | `attribution` setting | the user's machine, Claude Code | the tool's own Co-Authored-By trailer and PR footer | no |
 | git hooks (`commit-msg`, `pre-commit`, `pre-push`) | any machine with the hooks installed | names, AI trailers/identity, commits on main, AI files, pushes to main | only if installed there |
 | GitHub rulesets | GitHub, server side | pushes to the default branch, force pushes, branch deletion, bad branch names, bad commit messages, AI trailers, AI author emails | **yes** — nothing bypasses them |
