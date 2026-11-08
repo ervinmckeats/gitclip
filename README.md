@@ -49,7 +49,7 @@ cp -r gitclip/skills/gitclip ~/.claude/skills/
 | 1 | Authorship | Every commit is authored and committed by you. No `Co-Authored-By: <AI>`, no "Generated with", no session links, no AI names in git text. |
 | 2 | Naming | Branches: `type/short-description`. Commits and PR titles: `type: text`. Types: `feat`, `fix`, `add`, `del`, `docs` — nothing else. |
 | 3 | Language | English, imperative, ≤ 50 characters after the prefix, no trailing period. |
-| 4 | Pull requests | Never push to `main`. Features and key changes stay as open PRs for you to merge; only `fix/` PRs may auto-merge. |
+| 4 | Pull requests | Never push to `main`. Features and key changes stay as open PRs for you to merge; `fix/` and `docs/` PRs may be merged by the agent, only after a PR check (title, description, commits, files). |
 | 5 | CI | No GitHub Actions created, edited, or triggered unless you ask in the conversation. |
 | 6 | AI files | `CLAUDE.md`, `AGENTS.md`, `.claude/`, `.cursor/` and similar are never committed. |
 | 7 | Artifacts | Everything the agent produces for a project (docs, designs, images, data) is committed to the repo, not left in the AI tool's cloud. |
@@ -72,7 +72,7 @@ Full text: [`skills/gitclip/SKILL.md`](skills/gitclip/SKILL.md). Examples: [`ref
 | Layer | Blocks | Works in cloud sessions |
 |---|---|---|
 | Skill | everything, by instruction | yes, when loaded |
-| Plugin hooks (`SessionStart` + `PreToolUse`) | bad names, AI trailers/identity, pushes to `main`, force push, `--no-verify`, merging non-fix PRs, Actions, AI files | no (local Claude Code) |
+| Plugin hooks (`SessionStart` + `PreToolUse`) | bad names, AI trailers/identity, pushes to `main`, force push, `--no-verify`, merging PRs other than `fix/`/`docs/` or ones that fail the PR check, Actions, AI files | no (local Claude Code) |
 | `attribution` setting via `setup.sh` | the tool's own trailer and PR footer | no (local Claude Code) |
 | git hooks ([`templates/git-hooks`](templates/git-hooks)) | bad names, AI trailers/identity, commits on `main`, AI files | wherever installed |
 | GitHub rulesets ([`templates/github-rulesets`](templates/github-rulesets)) | pushes to `main`, force push, bad branch names and messages, AI trailers, AI emails | **yes** |
