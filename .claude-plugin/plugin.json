@@ -1,7 +1,7 @@
 {
   "name": "gitclip",
   "displayName": "gitclip",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Strict git rules for AI coding agents: human-only authorship, no AI trailers, feat/fix/add/del/docs naming, PR workflow, no unasked CI, no AI files in repos. Enforced by hooks.",
   "author": { "name": "Ervin McKeats", "url": "https://github.com/ervinmckeats" },
   "homepage": "https://github.com/ervinmckeats/gitclip",

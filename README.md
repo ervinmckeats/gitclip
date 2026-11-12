@@ -53,6 +53,7 @@ cp -r gitclip/skills/gitclip ~/.claude/skills/
 | 5 | CI | No GitHub Actions created, edited, or triggered unless you ask in the conversation. |
 | 6 | AI files | `CLAUDE.md`, `AGENTS.md`, `.claude/`, `.cursor/` and similar are never committed. |
 | 7 | Artifacts | Everything the agent produces for a project (docs, designs, images, data) is committed to the repo, not left in the AI tool's cloud. |
+| 8 | Privacy | No personal data or chat content in commits, branches, or PRs: no emails, phone numbers, home paths, chat links, people's names, or quotes from the conversation. |
 
 Full text: [`skills/gitclip/SKILL.md`](skills/gitclip/SKILL.md). Examples: [`references/examples.md`](skills/gitclip/references/examples.md).
 

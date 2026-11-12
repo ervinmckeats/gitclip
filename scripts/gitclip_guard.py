@@ -94,6 +94,32 @@ def check_no_ai(text, what):
     m = AI_NAME_RE.search(text or "")
     if m:
         block(f'{what} mentions an AI product or vendor ("{m.group(0)}")', "describe the change without AI names")
+    check_private(text, what)
+
+
+EMAIL_RE = re.compile(r"[\w.+-]+@[\w-]+(\.[\w-]+)+")
+SAFE_EMAIL_RE = re.compile(r"(?i)@(users\.noreply\.github\.com|example\.(com|org|net))$")
+PRIVATE_RES = [
+    (re.compile(r"(?i)(/Users/|/home/|[A-Z]:\\\\?Users\\\\?)[A-Za-z0-9._-]+"), "a local home folder path"),
+    (re.compile(r"(?i)\b(claude\.ai/(chat|code|share|project)|chatgpt\.com/(c|share)|chat\.openai\.com|gemini\.google\.com/app)\S*"),
+     "a link to an AI chat or session"),
+    (re.compile(r"(?<![\w.#/-])\+?\d[\d ()-]{8,}\d(?![\w.-])"), "a phone-like number"),
+    (re.compile(r"[Ѐ-ӿ]"), "non-English text (Cyrillic), likely copied from a conversation"),
+]
+
+
+def check_private(text, what):
+    """Rule 8: no personal data or conversation content in git text."""
+    text = text or ""
+    for m in EMAIL_RE.finditer(text):
+        if not SAFE_EMAIL_RE.search(m.group(0)):
+            block(f'{what} contains an email address ("{m.group(0)}")',
+                  "remove personal data; describe the change, not who asked for it")
+    for rx, label in PRIVATE_RES:
+        m = rx.search(text)
+        if m:
+            block(f'{what} contains {label} ("{m.group(0)[:40]}")',
+                  "remove personal data and conversation content; git text describes the change only")
 
 
 # ---------- parsing ----------
@@ -377,6 +403,14 @@ def check_gh(tokens, cwd, bodies):
             body = resolve_heredoc(b, bodies)
             if AI_TRAILER_RE.search(body):
                 block("PR body contains AI attribution", "remove the footer; the user is the only author")
+            check_private(body, "PR body")
+        for f in option_values(rest[1:], ("-F",), ("--body-file",)):
+            path = f if os.path.isabs(f) else os.path.join(cwd, f)
+            try:
+                with open(path, encoding="utf-8") as fh:
+                    check_no_ai(fh.read(), "PR body")
+            except OSError:
+                pass
     if group == "pr" and action == "merge":
         target = positional(rest[1:], takes_value=("-t", "--subject", "-b", "--body", "-F", "--body-file", "-R", "--repo", "--match-head-commit", "-A", "--author-email"))
         repo = option_values(rest[1:], ("-R",), ("--repo",))

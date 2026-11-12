@@ -90,6 +90,18 @@ run 2 Bash 'gh pr merge 19 --squash'
 pr fix/login-crash "docs: prevent login loop" "- guard" '["src/auth.ts"]'
 run 2 Bash 'gh pr merge 20 --squash'
 
+# privacy (Rule 8)
+run 2 Bash 'git commit -m "fix: crash reported by jane@gmail.com"'
+run 2 Bash 'git commit -m "fix: path /Users/jane/Documents/app"'
+run 2 Bash 'git commit -m "fix: as discussed in claude.ai/chat/abc123"'
+run 2 Bash 'git commit -m "fix: call +7 999 123 45 67"'
+run 2 Bash 'git commit -m "fix: исправить вход"'
+run 2 Bash 'gh pr create --title "fix: login loop" --body "- user Jane asked in chat: /home/jane/notes"'
+run 0 Bash 'git commit -m "fix: handle 404 on /api/v2/users"'
+run 0 Bash 'gh pr create --title "fix: login loop" --body "- guard expired token, see #12"'
+pr fix/login-crash "fix: prevent login loop" "- reported by jane@gmail.com" '["src/auth.ts"]'
+run 2 Bash 'gh pr merge 21 --squash'
+
 # actions
 run 2 Bash 'gh workflow run build.yml'
 run 2 Bash 'gh run rerun 123'
