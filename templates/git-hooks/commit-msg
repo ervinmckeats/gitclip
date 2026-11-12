@@ -30,6 +30,11 @@ if grep -Eiq '^[[:space:]]*co-authored-by:.*(claude|anthropic|copilot|openai|gem
   exit 1
 fi
 
+if grep -v '^#' "$msg_file" | grep -Eiq '/Users/[A-Za-z0-9._-]+|/home/[A-Za-z0-9._-]+|claude\.ai/(chat|code|share)|chatgpt\.com/(c|share)'; then
+  echo "gitclip: commit message contains a home path or chat link; remove personal data" >&2
+  exit 1
+fi
+
 ident="$(git var GIT_AUTHOR_IDENT) $(git var GIT_COMMITTER_IDENT)"
 if printf '%s' "$ident" | grep -Eiq 'claude|anthropic|copilot|openai|gemini|codex|\[bot\]'; then
   echo "gitclip: author/committer looks like an AI or bot: $ident" >&2

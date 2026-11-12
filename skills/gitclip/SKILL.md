@@ -14,7 +14,7 @@ These rules are **mandatory**. They apply to every git operation an AI agent per
 
 1. Read this whole file before the first git action of the session.
 2. Run the **pre-flight checks** below once per repository.
-3. Apply Rules 1–7 to every action.
+3. Apply Rules 1–8 to every action.
 4. Before reporting any task as done, run the **final checklist**. If any item fails, fix it first.
 
 ## One-time setup (the user runs it, not the agent)
@@ -106,7 +106,7 @@ One logical change per commit. If a change mixes types, split it into separate c
 **PR check before any merge** — read the PR as it is on GitHub (`gh pr view <n> --json title,body,commits,files,mergeable`), not your local copy, and merge only if all of these hold:
 
 1. Title is `type: text` and its type matches the branch type.
-2. Description has no AI names, `Generated with/by` footers, session links, or emojis — **some platforms append these after you submit**, so check the live PR. If one is there and you cannot remove it, do not merge: tell the user.
+2. Title and description have no personal data or conversation content (Rule 8). Description has no AI names, `Generated with/by` footers, session links, or emojis — **some platforms append these after you submit**, so check the live PR. If one is there and you cannot remove it, do not merge: tell the user.
 3. Every commit is authored by the user, has a `type: text` subject, and no AI trailers.
 4. Files: no AI agent files (Rule 6), no workflow files (Rule 5); for `docs`, documentation files only.
 5. No merge conflicts, not a draft, CI green (if any).
@@ -154,6 +154,24 @@ Everything produced while working on a project also lives in the project's repos
 - If the repository is unknown or not accessible, **stop and ask** before reporting the work as done.
 - Never mirror: AI agent files (Rule 6), secrets/tokens/`.env`, throwaway scratch output. Ask before committing files over ~50 MB (e.g. Git LFS).
 
+## Rule 8 — No personal data or conversation content in git text
+
+Git text is public and permanent: PR titles and bodies, commit messages, branch names, tags, release notes, and code comments. It describes **the change**, never the conversation that led to it.
+
+Never put into git text:
+
+- anything the user told you in a chat or AI app: their words, quotes, requests, opinions, decisions, screenshots, or "as discussed" summaries
+- names of people from the conversation, the user's name or nickname (beyond the git author field), `@mentions` of the user
+- email addresses (except `@users.noreply.github.com` and `example.com`), phone numbers, addresses, account IDs
+- local paths that reveal the user (`/Users/NAME/…`, `/home/NAME/…`, `C:\Users\NAME\…`), machine names, usernames
+- links to AI chats or sessions (`claude.ai/chat/…`, `claude.ai/code/…`, `chatgpt.com/c/…`, shared links)
+- private data from the project itself (real people's names, dates of birth, archive records, customer data) — summarize as "add records for case X", not the records
+- non-English text copied from the conversation (Rule 3 already requires English)
+
+Write what changed and why in neutral terms: ✅ `- add sheet scans for two archive records` ❌ `- Jane asked in chat to crop her screenshots of the 1865 birth record`.
+
+Before opening or editing a PR, and in the PR check before merging, read the title and body once more for anything personal. If personal data is already in a pushed commit or a PR, tell the user; do not try to hide it by rewriting history on your own.
+
 ## Forbidden commands (never run without the user's explicit request)
 
 ```text
@@ -172,6 +190,7 @@ gh pr merge  (on feat/add/del PRs, or before the PR check)   git config --global
 5. No GitHub Actions workflows created, edited, or triggered without explicit request.
 6. No AI agent files staged, committed, or pushed.
 7. Every artifact produced in this work is committed to the repo.
+8. No personal data or conversation content in any commit message, branch name, PR title or body.
 
 If you notice you broke a rule earlier in the session, say so plainly, fix what is still unpushed, and ask the user how to handle anything already pushed.
 

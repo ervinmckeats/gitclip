@@ -11,7 +11,7 @@ SUMMARY = (
     "nothing is pushed directly to the default branch, feature and key-change PRs stay open for the user to merge, "
     "only fix/ and docs/ PRs may be merged by the agent, and only after checking the live PR title, description, commits and files; GitHub Actions are not created, edited or triggered unless the user asks "
     "in this conversation; AI agent files such as CLAUDE.md, AGENTS.md and .claude/ are never committed; "
-    "every artifact produced for a project is also committed to its repository. "
+    "every artifact produced for a project is also committed to its repository; git text never contains personal data or content from the conversation (no emails, phone numbers, home paths, chat links, names or quotes). "
     "The full rules are in the gitclip skill, which is loaded before the first git action. "
     "A PreToolUse hook blocks commands that break these rules."
 )
