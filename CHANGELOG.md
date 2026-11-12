@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.2.0
+
+- feat: rule 8, no personal data or chat content in git text
+- feat: guard blocks emails, phone numbers, home paths, chat links and non-English text in commits and PRs
+
 ## 1.1.0
 
 - feat: allow agents to merge docs/ PRs after a PR check
