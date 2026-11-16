@@ -102,6 +102,39 @@ run 0 Bash 'gh pr create --title "fix: login loop" --body "- guard expired token
 pr fix/login-crash "fix: prevent login loop" "- reported by jane@gmail.com" '["src/auth.ts"]'
 run 2 Bash 'gh pr merge 21 --squash'
 
+# tags
+TAGREPO="$(mktemp -d)"
+git -C "$TAGREPO" init -q --bare
+git -C "$TMP" remote add origin "$TAGREPO"
+git -C "$TMP" switch -q main 2>/dev/null
+git -C "$TMP" push -q origin main 2>/dev/null
+git -C "$TMP" fetch -q origin
+git -C "$TMP" tag -a v1.0.0 -m "first release"
+git -C "$TMP" switch -q -c feat/unmerged && git -C "$TMP" commit -q --allow-empty -m "feat: add unmerged work"
+git -C "$TMP" tag -a v9.0.0 -m "unmerged release"
+git -C "$TMP" switch -q main
+git -C "$TMP" tag -a v1.0.1 -m "release by claude"
+run 0 Bash 'git tag -a v1.1.0 -m "add tag support"'
+run 0 Bash 'git tag v1.1.0-rc.1'
+run 2 Bash 'git tag release-1'
+run 2 Bash 'git tag -a v1.1.0 -m "Generated with Claude Code"'
+run 2 Bash 'git tag -a v1.1.0 -m "release for jane@gmail.com"'
+run 2 Bash 'git tag -f v1.0.0'
+run 0 Bash 'git tag -l'
+run 0 Bash 'git push origin v1.0.0'
+run 0 Bash 'git push origin refs/tags/v1.0.0'
+run 0 Bash 'git push origin tag v1.0.0'
+run 2 Bash 'git push origin v9.0.0'
+run 2 Bash 'git push origin v1.0.1'
+run 2 Bash 'git push --tags'
+run 2 Bash 'git push --delete origin v1.0.0'
+run 2 Bash 'git push origin :refs/tags/v1.0.0'
+run 2 Bash 'git push --force origin v1.0.0'
+git -C "$TMP" tag -d v9.0.0 v1.0.1 >/dev/null
+run 0 Bash 'git push --tags'
+run 2 Bash 'git push --follow-tags'
+git -C "$TMP" switch -q feat/user-profile
+
 # actions
 run 2 Bash 'gh workflow run build.yml'
 run 2 Bash 'gh run rerun 123'

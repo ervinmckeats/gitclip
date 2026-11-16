@@ -293,6 +293,58 @@ def unpushed_range(cwd, branch):
     return ""
 
 
+TAG_RE = re.compile(r"^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(-[0-9A-Za-z.-]+)?$")
+
+
+def default_branch(cwd):
+    head = run_git(cwd, "symbolic-ref", "--quiet", "--short", "refs/remotes/origin/HEAD")
+    if head.startswith("origin/"):
+        return head
+    for b in ("origin/main", "origin/master"):
+        if run_git(cwd, "rev-parse", "--verify", "--quiet", b):
+            return b
+    return ""
+
+
+def check_tag_name(name):
+    if not TAG_RE.match(name):
+        block(f'tag "{name}" is not a version tag',
+              "name release tags vMAJOR.MINOR.PATCH, e.g. v1.2.0 or v1.2.0-rc.1")
+
+
+def check_tag_push(name, cwd):
+    """A pushed tag must be a version tag on a commit already in the default branch, with a clean message."""
+    check_tag_name(name)
+    if not run_git(cwd, "rev-parse", "--verify", "--quiet", f"refs/tags/{name}"):
+        return  # git itself will fail; nothing to check
+    base = default_branch(cwd)
+    commit = run_git(cwd, "rev-parse", f"refs/tags/{name}^{{commit}}")
+    if base and commit:
+        try:
+            ok = subprocess.run(["git", "-C", cwd, "merge-base", "--is-ancestor", commit, base],
+                                capture_output=True, timeout=10).returncode == 0
+        except Exception:
+            ok = True
+        if not ok:
+            block(f'tag "{name}" points to a commit that is not on {base}',
+                  "tag only commits that are already merged into the default branch")
+    msg = run_git(cwd, "for-each-ref", "--format=%(contents)", f"refs/tags/{name}")
+    if msg:
+        check_no_ai(msg, f'tag "{name}" message')
+    tagger = run_git(cwd, "for-each-ref", "--format=%(taggername) %(taggeremail)", f"refs/tags/{name}")
+    if tagger.strip() and AI_IDENTITY_RE.search(tagger):
+        block(f'tag "{name}" was created by {tagger}', "tags must be created by the user")
+
+
+def is_tag_ref(dst, cwd):
+    if dst.startswith("refs/tags/"):
+        return True
+    if dst.startswith("refs/heads/"):
+        return False
+    return bool(run_git(cwd, "rev-parse", "--verify", "--quiet", f"refs/tags/{dst}")) and \
+        not run_git(cwd, "rev-parse", "--verify", "--quiet", f"refs/heads/{dst}")
+
+
 def git_push(args, cwd):
     if "--no-verify" in args:
         block("push with --no-verify skips the repository's checks", "push without --no-verify")
@@ -300,28 +352,53 @@ def git_push(args, cwd):
     force = any(a in ("--force", "-f") or a.startswith("--force-with-lease") or a == "--force-if-includes"
                 or (re.match(r"^-[a-zA-Z]*f", a) and not a.startswith("--")) for a in args)
     deleting = "--delete" in args or "-d" in args
+    all_tags = "--tags" in args
     pos = positional(args, takes_value=("-o", "--push-option", "--repo"))
     refspecs = pos[1:] if pos else []
     branch = run_git(cwd, "rev-parse", "--abbrev-ref", "HEAD")
-    targets = []
+    branches, tags = [], []
     for spec in refspecs:
         if spec.startswith("+"):
             force = True
             spec = spec[1:]
+        if spec.startswith(":"):
+            deleting = True
         dst = spec.split(":", 1)[1] if ":" in spec else spec
         if dst == "HEAD":
             dst = branch
-        targets.append(dst.replace("refs/heads/", ""))
-    if not refspecs and branch:
-        targets.append(branch)
-    for t in targets:
+        if spec == "tag" or dst == "tag":
+            continue  # "git push origin tag v1.0.0" form
+        if is_tag_ref(dst, cwd) or (deleting and TAG_RE.match(dst.replace("refs/tags/", ""))):
+            tags.append(dst.replace("refs/tags/", ""))
+        else:
+            branches.append(dst.replace("refs/heads/", ""))
+    if "tag" in refspecs:
+        i = refspecs.index("tag")
+        if i + 1 < len(refspecs) and refspecs[i + 1] not in tags:
+            tags.append(refspecs[i + 1])
+    if not refspecs and branch and not all_tags:
+        branches.append(branch)  # plain push / --follow-tags pushes the current branch
+    for t in branches:
         if t in prot:
             block(f'pushing {"(delete) " if deleting else ""}to protected branch "{t}"',
                   "push a type/short-description branch and open a pull request instead")
-        if t and not deleting and not t.startswith("refs/tags/"):
+        if t and not deleting:
             check_branch_name(t, cwd, "pushing")
+    if tags and (deleting or force):
+        block(f'{"deleting" if deleting else "force-pushing"} tag(s) {", ".join(tags)}',
+              "published tags are permanent; ask the user before moving or deleting one")
     if force:
         block("force push", "do not rewrite pushed history; ask the user first")
+    for name in tags:
+        check_tag_push(name, cwd)
+    if all_tags:
+        remote_tags = {line.split("refs/tags/", 1)[1].removesuffix("^{}")
+                       for line in run_git(cwd, "ls-remote", "--tags", "origin").splitlines() if "refs/tags/" in line}
+        for name in run_git(cwd, "tag", "--list").splitlines():
+            if name not in remote_tags:
+                check_tag_push(name, cwd)
+    if not branches:
+        return
     rng = unpushed_range(cwd, branch)
     if rng:
         idents = run_git(cwd, "log", "--format=%an <%ae>|%cn <%ce>", rng).splitlines()
@@ -348,6 +425,26 @@ def git_config(args, cwd):
     pos = positional(args, takes_value=("--file", "-f"))
     if len(pos) >= 2 and pos[0] in ("user.name", "user.email") and AI_IDENTITY_RE.search(pos[1]):
         block(f'setting {pos[0]} to an AI identity "{pos[1]}"', "use the user's own name and email")
+
+
+def git_tag(args, cwd, bodies):
+    listing = {"-l", "--list", "-n", "--contains", "--no-contains", "--merged", "--no-merged", "--points-at", "-v", "--verify"}
+    if any(a in listing or a.startswith(("-n", "--sort", "--format", "--column")) for a in args):
+        return
+    if any(a in ("-d", "--delete") for a in args):
+        return  # deleting a local tag is fine; deleting a pushed one goes through git push
+    if any(a in ("-f", "--force") for a in args):
+        block("re-tagging with --force", "published tags are permanent; ask the user before moving one")
+    pos = positional(args, takes_value=("-m", "--message", "-F", "--file", "-u", "--local-user", "--cleanup"))
+    if pos:
+        check_tag_name(pos[0])
+    for m in option_values(args, ("-m",), ("--message",)):
+        check_no_ai(resolve_heredoc(m, bodies), "tag message")
+    for f in option_values(args, ("-F",), ("--file",)):
+        if f == "-":
+            for b in bodies:
+                check_no_ai(b, "tag message")
+    check_identity(cwd, {})
 
 
 def check_git(tokens, cwd, bodies):
@@ -379,8 +476,7 @@ def check_git(tokens, cwd, bodies):
     elif sub == "config":
         git_config(args, cwd)
     elif sub == "tag":
-        for m in option_values(args, ("-m",), ("--message",)):
-            check_no_ai(resolve_heredoc(m, bodies), "tag message")
+        git_tag(args, cwd, bodies)
 
 
 def check_gh(tokens, cwd, bodies):

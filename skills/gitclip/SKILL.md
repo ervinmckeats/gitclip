@@ -14,7 +14,7 @@ These rules are **mandatory**. They apply to every git operation an AI agent per
 
 1. Read this whole file before the first git action of the session.
 2. Run the **pre-flight checks** below once per repository.
-3. Apply Rules 1–8 to every action.
+3. Apply Rules 1–9 to every action.
 4. Before reporting any task as done, run the **final checklist**. If any item fails, fix it first.
 
 ## One-time setup (the user runs it, not the agent)
@@ -172,6 +172,19 @@ Write what changed and why in neutral terms: ✅ `- add sheet scans for two arch
 
 Before opening or editing a PR, and in the PR check before merging, read the title and body once more for anything personal. If personal data is already in a pushed commit or a PR, tell the user; do not try to hide it by rewriting history on your own.
 
+## Rule 9 — Tags and releases
+
+Agents may create and push **release tags**, under these conditions:
+
+- **Name:** `vMAJOR.MINOR.PATCH`, optionally with a pre-release suffix: ✅ `v1.2.0`, `v2.0.0-rc.1` ❌ `release-1`, `1.2`, `v1.2`, `latest`.
+  Regex: `^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(-[0-9A-Za-z.-]+)?$`
+- **Only on merged commits:** tag a commit that is already in the default branch (`main`), never a feature branch or an unmerged commit. Usually: `git switch main && git pull --ff-only && git tag -a vX.Y.Z -m "..."`.
+- **Annotated, created by the user's identity:** `git tag -a vX.Y.Z -m "release X.Y.Z"`. The tag message and any release notes follow Rules 1, 3 and 8: English, short, no AI names or footers, no personal data.
+- **Pick the version from the changes since the last tag:** breaking change → MAJOR, new `feat` → MINOR, only `fix`/`docs`/`add`/`del` → PATCH. If the project has a version file (`package.json`, `plugin.json`, `pyproject.toml`…), it must already show the same version in `main` before tagging.
+- **Push one tag at a time:** `git push origin vX.Y.Z`. Use `git push --tags` only when every local tag is meant to be published.
+- **Published tags are permanent:** never move (`git tag -f`), force-push, or delete (`git push --delete origin vX.Y.Z`) a pushed tag without the user's explicit request. If a tag is wrong, make a new patch version.
+- `gh release create vX.Y.Z --notes "..."` is allowed for an existing pushed tag; notes are 2–6 bullets of what changed. Creating a release must not trigger GitHub Actions the user did not ask for (Rule 5): if release workflows exist, tell the user first.
+
 ## Forbidden commands (never run without the user's explicit request)
 
 ```text
@@ -179,6 +192,7 @@ git push --force / -f   (to any shared branch)     git push origin main / master
 git commit --no-verify  /  git push --no-verify    git reset --hard on pushed history
 git branch -D main      /  git push --delete main  gh workflow run / gh run rerun
 gh pr merge  (on feat/add/del PRs, or before the PR check)   git config --global …  (identity changes)
+git tag -f / git push --delete origin vX.Y.Z / force-push of a tag
 ```
 
 ## Final checklist (run every time; do not report done until all pass)
@@ -191,6 +205,7 @@ gh pr merge  (on feat/add/del PRs, or before the PR check)   git config --global
 6. No AI agent files staged, committed, or pushed.
 7. Every artifact produced in this work is committed to the repo.
 8. No personal data or conversation content in any commit message, branch name, PR title or body.
+9. Tags are `vMAJOR.MINOR.PATCH`, annotated, on commits already in the default branch; no pushed tag moved or deleted.
 
 If you notice you broke a rule earlier in the session, say so plainly, fix what is still unpushed, and ask the user how to handle anything already pushed.
 
