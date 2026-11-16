@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.0
+
+- feat: rule 9, release tags vX.Y.Z on merged commits
+- fix: guard no longer treats tag pushes as branch pushes
+- fix: git push --tags no longer counts as a push to main
+
 ## 1.2.0
 
 - feat: rule 8, no personal data or chat content in git text
